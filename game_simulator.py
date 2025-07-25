@@ -53,9 +53,19 @@ def simulate_hand(
 
     # Find winner(s)
     max_rank = max(p.hand_rank for p in players)
-    winners = [p for p in players if p.hand_rank == max_rank]
-    for p in winners:
-        p.win = True
+    candidates = [p for p in players if p.hand_rank == max_rank]
+
+    # Break ties using best hand comparison
+    winners = []
+    for p in candidates:
+        if not winners:
+            winners.append(p)
+        else:
+            cmp = compare_hands(p.best_hand, winners[0].best_hand)
+            if cmp > 0:
+                winners = [p]  # new winner
+            elif cmp == 0:
+                winners.append(p)  # tie
 
     if verbose:
         print("\n--- Board ---")
@@ -66,3 +76,14 @@ def simulate_hand(
         print("\nWinner(s):", ", ".join(p.name for p in winners))
 
     return board, players, winners
+
+
+def compare_hands(hand1: List[Card], hand2: List[Card]) -> int:
+    values1 = sorted([c.value for c in hand1], reverse=True)
+    values2 = sorted([c.value for c in hand2], reverse=True)
+    for v1, v2 in zip(values1, values2):
+        if v1 > v2:
+            return 1
+        elif v1 < v2:
+            return -1
+    return 0
